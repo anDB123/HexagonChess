@@ -206,7 +206,6 @@ export class HexagonBoardComponent implements OnInit {
     //if the king is in check, turn the king's tile red
 
     if (this.isKingInCheckmate(this.chessBoard, this.whoIsPlaying)) {
-      alert("checkmate")
       this.displayCheckmateEndcard();
     }
   }
@@ -270,17 +269,11 @@ export class HexagonBoardComponent implements OnInit {
     return counter;
   }
   movePiece(position: number, move: number[], board: chessPiece[]): any {
-    //check if the move is valid
-    console.log("move is " + move);
-    if (this.willMovePutKingInCheck(position, this.get1dIndexFrom2dIndex(move), board, this.whoIsPlaying)) {
-      alert("you can't put your king in check");
-      return;
-    }
-    console.log("king not put in check");
     board[position].hasMoved = true;
     board[this.get1dIndexFrom2dIndex(move)] = board[position];
     board[position] = new Empty('');
     this.whoIsPlaying = this.whoIsPlaying === 'white' ? 'black' : 'white';
+
     this.updateHexagonBoard();
   }
   selectPiece(position: number, hexId: string) {
@@ -293,215 +286,20 @@ export class HexagonBoardComponent implements OnInit {
     document.getElementById(hexId)?.classList.add('selected-tile');
     //turn valid moves tiles into orange-tile
     for (let move of validMoves) {
-      let hexId = 'hex' + move[0] + move[1];
-      let validHex = document.getElementById(hexId);
-      if (validHex) {
-        validHex?.classList.add('valid-move-tile');
-        validHex.onclick = () => this.movePiece(position, move, this.chessBoard);
+      if (!this.willMovePutKingInCheck(position, this.get1dIndexFrom2dIndex(move), this.chessBoard, this.whoIsPlaying)) {
+        let hexId = 'hex' + move[0] + move[1];
+        let validHex = document.getElementById(hexId);
+        if (validHex) {
+          validHex?.classList.add('valid-move-tile');
+          validHex.onclick = () => this.movePiece(position, move, this.chessBoard);
+        }
       }
 
     }
   }
   getValidMoves(position: number, board: chessPiece[]): number[][] {
-
     let piece = board[position];
-    let validMoves: number[][] = [];
-
-    if (piece.name === 'pawn') {
-      validMoves = this.pawnValidMoves(position, board);
-    }
-    else if (piece.name === 'rook') {
-      validMoves = this.rookValidMoves(position, board);
-    }
-    else if (piece.name === 'bishop') {
-      validMoves = this.bishopValidMoves(position, board);
-    }
-    else if (piece.name === 'queen') {
-      validMoves = this.queenValidMoves(position, board);
-    }
-    else if (piece.name === 'king') {
-      validMoves = this.kingValidMoves(position, board);
-    }
-    else if (piece.name === 'knight') {
-      validMoves = this.knightValidMoves(position, board);
-    }
-    else {
-      return [];
-    }
-
-    return validMoves;
-  }
-  pawnValidMoves(position: number, board: chessPiece[]): number[][] {
-    let pawn = board[position];
-    let twoDimPos = this.get2dIndexFrom1dIndex(position);
-    let validMoves: number[][] = [];
-    let vectors = [];
-    if (pawn.color === 'white') {
-      vectors.push([0, 2]);
-    }
-    if (pawn.color === 'black') {
-      vectors.push([0, -2]);
-    }
-    for (const vector of vectors) {
-      for (let i = 1; i < (pawn.hasMoved ? 2 : 3); i++) {
-        let nextPos = [twoDimPos[0] + vector[0] * i, twoDimPos[1] + vector[1] * i]
-        if (board[this.get1dIndexFrom2dIndex(nextPos)] === undefined) {
-          break;
-        }
-        if (board[this.get1dIndexFrom2dIndex(nextPos)].name == 'empty') {
-          validMoves.push(nextPos);
-        }
-        else
-          break;
-      }
-    }
-    const attackVectors = [];
-    if (pawn.color === 'white') {
-      attackVectors.push([1, 1]);
-      attackVectors.push([-1, 1]);
-    }
-    if (pawn.color === 'black') {
-      attackVectors.push([1, -1]);
-      attackVectors.push([-1, -1]);
-    }
-    for (const vector of attackVectors) {
-      for (let i = 1; i < 2; i++) {
-        let nextPos = [twoDimPos[0] + vector[0] * i, twoDimPos[1] + vector[1] * i]
-        if (board[this.get1dIndexFrom2dIndex(nextPos)] === undefined) {
-          break;
-        }
-        if (board[this.get1dIndexFrom2dIndex(nextPos)].name != 'empty') {
-          if (board[this.get1dIndexFrom2dIndex(nextPos)].color != pawn.color) {
-            validMoves.push(nextPos);
-
-          }
-        }
-      }
-    }
-
-    return validMoves;
-  }
-  rookValidMoves(position: number, board: chessPiece[]): number[][] {
-    let rook = board[position];
-    let twoDimPos = this.get2dIndexFrom1dIndex(position);
-    let validMoves: number[][] = [];
-    let vectors = [[0, 2], [0, -2], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-    for (const vector of vectors) {
-      for (let i = 1; i < 11; i++) {
-        let nextPos = [twoDimPos[0] + vector[0] * i, twoDimPos[1] + vector[1] * i]
-        if (board[this.get1dIndexFrom2dIndex(nextPos)] === undefined) {
-          break;
-        }
-        if (board[this.get1dIndexFrom2dIndex(nextPos)].name != 'empty') {
-          if (board[this.get1dIndexFrom2dIndex(nextPos)].color != rook.color) {
-            validMoves.push(nextPos);
-          }
-          break;
-        }
-        else {
-          validMoves.push(nextPos);
-        }
-      }
-    }
-    return validMoves;
-  }
-  bishopValidMoves(position: number, board: chessPiece[]): number[][] {
-    let rook = board[position];
-    let twoDimPos = this.get2dIndexFrom1dIndex(position);
-    let validMoves: number[][] = [];
-    let vectors = [[1, 3], [-1, 3], [-2, 0], [2, 0], [1, -3], [-1, -3]];
-    for (const vector of vectors) {
-      for (let i = 1; i < 11; i++) {
-        let nextPos = [twoDimPos[0] + vector[0] * i, twoDimPos[1] + vector[1] * i]
-        if (board[this.get1dIndexFrom2dIndex(nextPos)] === undefined) {
-          break;
-        }
-        if (board[this.get1dIndexFrom2dIndex(nextPos)].name != 'empty') {
-          if (board[this.get1dIndexFrom2dIndex(nextPos)].color != rook.color) {
-            validMoves.push(nextPos);
-          }
-          break;
-        }
-        else {
-          validMoves.push(nextPos);
-        }
-      }
-    }
-    return validMoves;
-  }
-  queenValidMoves(position: number, board: chessPiece[]): number[][] {
-    let rook = board[position];
-    let twoDimPos = this.get2dIndexFrom1dIndex(position);
-    let validMoves: number[][] = [];
-    let vectors = [[0, 2], [0, -2], [1, 1], [1, -1], [-1, 1], [-1, -1], [1, 3], [-1, 3], [-2, 0], [2, 0], [1, -3], [-1, -3]];
-    for (const vector of vectors) {
-      for (let i = 1; i < 11; i++) {
-        let nextPos = [twoDimPos[0] + vector[0] * i, twoDimPos[1] + vector[1] * i]
-        if (board[this.get1dIndexFrom2dIndex(nextPos)] === undefined) {
-          break;
-        }
-        if (board[this.get1dIndexFrom2dIndex(nextPos)].name != 'empty') {
-          if (board[this.get1dIndexFrom2dIndex(nextPos)].color != rook.color) {
-            validMoves.push(nextPos);
-          }
-          break;
-        }
-        else {
-          validMoves.push(nextPos);
-        }
-      }
-    }
-    return validMoves;
-  }
-
-  knightValidMoves(position: number, board: chessPiece[]): number[][] {
-    let rook = board[position];
-    let twoDimPos = this.get2dIndexFrom1dIndex(position);
-    let validMoves: number[][] = [];
-    let vectors = [[2, 4], [2, -4], [-2, 4], [-2, -4], [-3, 1], [-3, -1], [3, 1], [3, -1], [-1, 5], [-1, -5], [1, 5], [1, -5],];
-    for (const vector of vectors) {
-      for (let i = 1; i < 2; i++) {
-        let nextPos = [twoDimPos[0] + vector[0] * i, twoDimPos[1] + vector[1] * i]
-        if (board[this.get1dIndexFrom2dIndex(nextPos)] === undefined) {
-          break;
-        }
-        if (board[this.get1dIndexFrom2dIndex(nextPos)].name != 'empty') {
-          if (board[this.get1dIndexFrom2dIndex(nextPos)].color != rook.color) {
-            validMoves.push(nextPos);
-          }
-          break;
-        }
-        else {
-          validMoves.push(nextPos);
-        }
-      }
-    }
-    return validMoves;
-  }
-
-  kingValidMoves(position: number, board: chessPiece[]): number[][] {
-    let rook = board[position];
-    let twoDimPos = this.get2dIndexFrom1dIndex(position);
-    let validMoves: number[][] = [];
-    let vectors = [[0, 2], [0, -2], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-    for (const vector of vectors) {
-      for (let i = 1; i < 2; i++) {
-        let nextPos = [twoDimPos[0] + vector[0] * i, twoDimPos[1] + vector[1] * i]
-        if (board[this.get1dIndexFrom2dIndex(nextPos)] === undefined) {
-          break;
-        }
-        if (board[this.get1dIndexFrom2dIndex(nextPos)].name != 'empty') {
-          if (board[this.get1dIndexFrom2dIndex(nextPos)].color != rook.color) {
-            validMoves.push(nextPos);
-          }
-          break;
-        }
-        else {
-          validMoves.push(nextPos);
-        }
-      }
-    }
-    return validMoves;
+    return piece.validMoves(position, board);
   }
 
   getAllValidMoves(board: chessPiece[], color: string): number[] {
@@ -578,21 +376,25 @@ export class HexagonBoardComponent implements OnInit {
 
   displayCheckmateEndcard() {
     //make an element that covers the board displaying checkmate and a button to restart the game
-    let board = document.getElementById('hexagon-board');
+    let board = document.getElementById('game-area');
     if (board === null) {
       return;
     }
+    console.log()
     let endCard = document.createElement('div');
-    endCard.classList.add('end-card');
+    endCard.id = ('end-card');
     let endCardText = document.createElement('div');
     endCardText.classList.add('end-card-text');
     endCardText.innerHTML = "Checkmate";
+    //
+    let restartButtonDiv = document.createElement('div');
     let restartButton = document.createElement('button');
     restartButton.classList.add('restart-button');
     restartButton.innerHTML = "Restart";
     restartButton.addEventListener('click', () => this.restartGame());
+    restartButtonDiv.appendChild(restartButton);
     endCard.appendChild(endCardText);
-    endCard.appendChild(restartButton);
+    endCard.appendChild(restartButtonDiv);
     board.appendChild(endCard);
 
   }
@@ -601,5 +403,12 @@ export class HexagonBoardComponent implements OnInit {
     this.chessBoard = [];
     this.fillChessBoard();
     this.updateHexagonBoard();
+    //remove the end card
+    let endCard = document.getElementById('end-card');
+    if (endCard) {
+      endCard.remove();
+    }
+
   }
 }
+

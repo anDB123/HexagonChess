@@ -80,7 +80,7 @@
     color: green;
 }
 
-::ng-deep .end-card {
+::ng-deep #end-card {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
@@ -90,5 +90,16 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    //make text big
+    font-size: 2em;
 
+}
+
+::ng-deep .end-card-text {
+    //add white border on text
+    -webkit-text-stroke: 1px white;
+    color: black;
+    //make text big
+    font-size: 2em;
+    border: 1px solid white;
 }
